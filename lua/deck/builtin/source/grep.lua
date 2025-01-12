@@ -63,15 +63,19 @@ return function(option)
         '--ignore-case',
         '--column',
         '--line-number',
+        '--hidden',
         '--sort',
         'path',
       }
+
       if option.ignore_globs then
         for _, glob in ipairs(option.ignore_globs) do
           table.insert(command, '--glob')
           table.insert(command, '!' .. glob)
         end
       end
+
+      table.insert(command, '-e')
       table.insert(command, query)
 
       ctx.on_abort(System.spawn(command, {
