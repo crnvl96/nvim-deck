@@ -44,11 +44,20 @@ do
         return false
       end,
       execute = function(ctx)
-        local win = vim.iter(win_history):find(function(win)
-          return vim.api.nvim_win_is_valid(win) and vim.api.nvim_get_option_value('buftype', {
-            buf = vim.api.nvim_win_get_buf(win),
-          }) == ''
-        end) or vim.api.nvim_get_current_win()
+        local find_in_win_history = function()
+          return vim.iter(win_history):find(function(win)
+            local valid = vim.api.nvim_win_is_valid(win)
+
+            if not valid then
+              return false
+            end
+
+            return vim.api.nvim_win_get_config(win).relative == ''
+          end)
+        end
+
+        local win = find_in_win_history()
+
         for _, item in ipairs(ctx.get_action_items()) do
           vim.api.nvim_set_current_win(win)
 
@@ -431,9 +440,17 @@ action.substitute = {
 
     -- create substitute buffer.
     local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.iter(substitute_targets):map(function(target)
-      return target.text
-    end):totable()
+    vim.api.nvim_buf_set_lines(
+      buf,
+      0,
+      -1,
+      false,
+      vim
+        .iter(substitute_targets)
+        :map(function(target)
+          return target.text
+        end)
+        :totable()
     )
     vim.api.nvim_buf_set_name(buf, 'substitute')
     vim.api.nvim_set_option_value('buftype', 'acwrite', { buf = buf })
